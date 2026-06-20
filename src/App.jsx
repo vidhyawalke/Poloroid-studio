@@ -23,7 +23,8 @@ const DOT_COLORS = [
   { name: 'Green', hex: '#69db88', bg: '#d6f5df' },
   { name: 'Cyan', hex: '#48d6d6', bg: '#daf9f9' },
   { name: 'Blue', hex: '#57a8ff', bg: '#e0eeff' },
-  { name: 'Purple', hex: '#8b8bff', bg: '#e5e5ff' }
+  { name: 'Purple', hex: '#8b8bff', bg: '#e5e5ff' },
+  { name: 'White', hex: '#ffffff', bg: '#ffffff' }
 ];
 
 const FONTS = ['Default', 'Reenie', 'Caveat', 'Kalam'];
@@ -45,14 +46,13 @@ export default function App() {
   const [date, setDate] = useState('');
   const [isDeveloping, setIsDeveloping] = useState(false);
 
-  // Modals
+  // Modal States
   const [showShareModal, setShowShareModal] = useState(false);
   const [showSpecsModal, setShowSpecsModal] = useState(false);
   const [copyStatus, setCopyStatus] = useState('Copy Link');
 
   const exportRef = useRef(null);
 
-  // Format date (MM.DD.YY)
   const getFormattedDate = () => {
     const d = new Date();
     const yy = String(d.getFullYear()).slice(-2);
@@ -84,13 +84,8 @@ export default function App() {
 
   const handleColorClick = (color) => {
     playSlide();
-    if (activeColorName === color.name) {
-      setFrameColor('#ffffff');
-      setActiveColorName('White');
-    } else {
-      setFrameColor(color.bg);
-      setActiveColorName(color.name);
-    }
+    setFrameColor(color.bg);
+    setActiveColorName(color.name);
   };
 
   const cycleFont = () => {
@@ -160,7 +155,7 @@ export default function App() {
   return (
     <div className="min-h-screen w-screen bg-gradient-to-b from-[#f0f5fa] to-[#e1eaf2] flex flex-col justify-between items-center px-4 py-8 relative font-sans select-none overflow-x-hidden">
       
-      {/* Specs modal trigger */}
+      {/* Help specs button */}
       <div className="absolute top-6 right-6 flex items-center gap-3 z-20">
         <button
           onClick={() => {
@@ -182,13 +177,13 @@ export default function App() {
         </h1>
       </header>
 
-      {/* Main Centered Polaroid Card */}
+      {/* Centered Polaroid Card with Entry Animation */}
       <main className="flex-1 flex items-center justify-center my-6 z-10">
         <motion.div
           key={image ? 'loaded' : 'empty'}
-          initial={{ opacity: 0, y: 30, scale: 0.96 }}
+          initial={{ opacity: 0, y: 35, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ type: 'spring', damping: 20, stiffness: 90 }}
+          transition={{ type: 'spring', damping: 20, stiffness: 85 }}
         >
           <PolaroidCard
             image={image}
@@ -209,69 +204,88 @@ export default function App() {
         </motion.div>
       </main>
 
-      {/* Controls and Actions (exactly matching Screenshot 4 & 5 layout) */}
+      {/* Controls Bar & Actions Group */}
       <div className="flex flex-col items-center gap-5.5 w-full max-w-xl z-10">
         
-        {/* Floating pill control bar */}
+        {/* Floating pill control bar (matching Screenshot 4 & 5 exactly) */}
         {image && (
           <motion.div 
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="bg-white rounded-full px-5 py-2 shadow-sm border border-stone-200/20 flex items-center gap-4.5"
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+            className="bg-white rounded-full px-5 py-2 shadow-sm border border-stone-200/20 flex items-center justify-between gap-6"
           >
-            {/* 7 Color circles */}
+            {/* Color preset dots */}
             <div className="flex items-center gap-2">
               {DOT_COLORS.map((col) => (
                 <button
                   key={col.name}
                   onClick={() => handleColorClick(col)}
                   style={{ backgroundColor: col.hex }}
-                  className={`w-6.5 h-6.5 rounded-full border border-stone-200/40 hover:scale-105 active:scale-95 transition-all shadow-sm ${
-                    activeColorName === col.name 
+                  className={`w-7 h-7 rounded-full border border-stone-200/60 hover:scale-105 active:scale-95 transition-all shadow-sm ${
+                    frameColor.toLowerCase() === col.bg.toLowerCase()
                       ? 'ring-2 ring-[#0070f3] ring-offset-1 scale-105' 
                       : ''
                   }`}
                   title={col.name}
                 />
               ))}
+              {/* Rainbow custom color picker dot */}
+              <div 
+                className="w-7 h-7 rounded-full border border-stone-300/80 bg-gradient-to-tr from-red-400 via-green-400 to-blue-400 hover:scale-105 active:scale-95 transition-all relative cursor-pointer shadow-sm flex items-center justify-center overflow-hidden"
+                title="Custom Color"
+              >
+                <input
+                  type="color"
+                  value={frameColor.startsWith('#') ? frameColor : '#ffffff'}
+                  onChange={(e) => {
+                    setFrameColor(e.target.value);
+                    setActiveColorName('Custom');
+                  }}
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                />
+                <span className="text-[10px] text-white font-bold select-none pointer-events-none">+</span>
+              </div>
             </div>
 
             {/* Vertical Divider */}
             <div className="w-[1px] h-5 bg-stone-200" />
 
-            {/* Date Calendar Toggle Button */}
-            <button
-              onClick={() => {
-                playSlide();
-                setShowDate(!showDate);
-              }}
-              className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all hover:scale-105 active:scale-95 ${
-                showDate 
-                  ? 'bg-[#0070f3] border-transparent text-white shadow-sm' 
-                  : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50'
-              }`}
-              title="Toggle Date"
-            >
-              <Calendar size={15} />
-            </button>
+            {/* Icons Action block (Calendar toggle & T font toggle) */}
+            <div className="flex items-center gap-2">
+              {/* Calendar Toggle */}
+              <button
+                onClick={() => {
+                  playSlide();
+                  setShowDate(!showDate);
+                }}
+                className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all hover:scale-105 active:scale-95 ${
+                  showDate 
+                    ? 'bg-[#0070f3] border-transparent text-white shadow-sm' 
+                    : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50'
+                }`}
+                title="Toggle Date"
+              >
+                <Calendar size={15} />
+              </button>
 
-            {/* Font Style Toggle Button */}
-            <button
-              onClick={cycleFont}
-              className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all hover:scale-105 active:scale-95 ${
-                font !== 'Default' 
-                  ? 'bg-[#0070f3] border-transparent text-white shadow-sm' 
-                  : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50'
-              }`}
-              title={`Current Font: ${font}`}
-            >
-              <Type size={15} />
-            </button>
+              {/* T Font Style Toggle */}
+              <button
+                onClick={cycleFont}
+                className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all hover:scale-105 active:scale-95 ${
+                  font !== 'Default' 
+                    ? 'bg-[#0070f3] border-transparent text-white shadow-sm' 
+                    : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50'
+                }`}
+                title={`Font: ${font}`}
+              >
+                <Type size={15} />
+              </button>
+            </div>
           </motion.div>
         )}
 
-        {/* Restart & Share bottom bar */}
+        {/* Restart link & Share button bar */}
         {image && (
           <div className="flex items-center gap-8 mt-1">
             <button
@@ -296,7 +310,7 @@ export default function App() {
         )}
       </div>
 
-      {/* SHARE MODAL POPUP (iOS Share Sheet) */}
+      {/* SHARE MODAL POPUP (Image 2 & 3 ios share sheet details) */}
       <AnimatePresence>
         {showShareModal && (
           <div className="fixed inset-0 bg-stone-900/25 backdrop-blur-[2px] z-50 flex items-center justify-center p-4">
@@ -368,35 +382,45 @@ export default function App() {
               <div className="flex justify-between items-center px-1 border-t border-stone-100 pt-5">
                 <button onClick={handleCopyLink} className="flex flex-col items-center gap-1 group">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 flex items-center justify-center shadow-sm hover:opacity-90 active:scale-95 transition-all text-white font-semibold">
-                    📸
+                    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
+                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                    </svg>
                   </div>
                   <span className="text-[8px] font-semibold text-stone-400 group-hover:text-stone-600 mt-0.5">Instagram</span>
                 </button>
 
                 <button onClick={handleCopyLink} className="flex flex-col items-center gap-1 group">
-                  <div className="w-10 h-10 rounded-xl bg-[#0077b5] flex items-center justify-center shadow-sm hover:opacity-90 active:scale-95 transition-all text-white text-xs font-mono font-bold">
-                    in
+                  <div className="w-10 h-10 rounded-xl bg-[#0077b5] flex items-center justify-center shadow-sm hover:opacity-90 active:scale-95 transition-all text-white font-mono font-bold">
+                    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
+                      <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                    </svg>
                   </div>
                   <span className="text-[8px] font-semibold text-stone-400 group-hover:text-stone-600 mt-0.5">LinkedIn</span>
                 </button>
 
                 <button onClick={handleCopyLink} className="flex flex-col items-center gap-1 group">
-                  <div className="w-10 h-10 rounded-xl bg-[#0084ff] flex items-center justify-center shadow-sm hover:opacity-90 active:scale-95 transition-all text-white">
-                    ✉️
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-b from-[#29b6f6] to-[#0288d1] flex items-center justify-center shadow-sm hover:opacity-90 active:scale-95 transition-all text-white">
+                    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
+                      <path d="M0 3v18h24v-18h-24zm21.518 2l-9.518 7.713-9.518-7.713h19.036zm-19.518 14v-11.817l10 8.104 10-8.104v11.817h-20z"/>
+                    </svg>
                   </div>
                   <span className="text-[8px] font-semibold text-stone-400 group-hover:text-stone-600 mt-0.5">Mail</span>
                 </button>
 
                 <button onClick={handleCopyLink} className="flex flex-col items-center gap-1 group">
-                  <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center shadow-sm hover:opacity-90 active:scale-95 transition-all text-white font-bold font-mono text-sm">
-                    X
+                  <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center shadow-sm hover:opacity-90 active:scale-95 transition-all text-white">
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
                   </div>
                   <span className="text-[8px] font-semibold text-stone-400 group-hover:text-stone-600 mt-0.5">X</span>
                 </button>
 
                 <button onClick={handleCopyLink} className="flex flex-col items-center gap-1 group">
-                  <div className="w-10 h-10 rounded-xl bg-[#4cd964] flex items-center justify-center shadow-sm hover:opacity-90 active:scale-95 transition-all text-white text-base">
-                    💬
+                  <div className="w-10 h-10 rounded-xl bg-[#4cd964] flex items-center justify-center shadow-sm hover:opacity-90 active:scale-95 transition-all text-white">
+                    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
+                      <path d="M12 2c5.523 0 10 3.866 10 8.636 0 2.727-1.459 5.158-3.75 6.702l.608 2.946-2.91-1.46c-1.173.298-2.427.448-3.948.448-5.523 0-10-3.866-10-8.636s4.477-8.636 10-8.636zm0 2c-4.418 0-8 3.08-8 6.886s3.582 6.886 8 6.886c1.233 0 2.402-.24 3.424-.672l1.79 1.042-.375-1.92 2.21-1.63c1.55-1.205 2.527-3.08 2.527-4.98 0-3.806-3.582-6.886-8-6.886zm-3.5 6c.828 0 1.5.672 1.5 1.5s-.672 1.5-1.5 1.5-1.5-.672-1.5-1.5.672-1.5 1.5-1.5zm3.5 0c.828 0 1.5.672 1.5 1.5s-.672 1.5-1.5 1.5-1.5-.672-1.5-1.5.672-1.5 1.5-1.5zm3.5 0c.828 0 1.5.672 1.5 1.5s-.672 1.5-1.5 1.5-1.5-.672-1.5-1.5.672-1.5 1.5-1.5z"/>
+                    </svg>
                   </div>
                   <span className="text-[8px] font-semibold text-stone-400 group-hover:text-stone-600 mt-0.5">Messages</span>
                 </button>
@@ -406,7 +430,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* SPECS MODAL (Image 4 specifications popup) */}
+      {/* SPECS/INFO MODAL */}
       <AnimatePresence>
         {showSpecsModal && (
           <div className="fixed inset-0 bg-stone-900/25 backdrop-blur-[2px] z-50 flex items-center justify-center p-4">
