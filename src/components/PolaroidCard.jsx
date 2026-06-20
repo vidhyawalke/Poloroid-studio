@@ -153,7 +153,7 @@ export default function PolaroidCard({
               >
                 <img
                   src={image}
-                  alt="Polaroid source"
+                  alt="Snapshot source"
                   draggable="false"
                   className={`w-full h-full object-contain select-none pointer-events-none ${getFilterCSS()} ${
                     isDeveloping ? 'animate-develop' : ''

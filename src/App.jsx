@@ -11,10 +11,15 @@ import {
   X, 
   HelpCircle, 
   Type, 
-  ExternalLink
+  ExternalLink,
+  Image as ImageIcon
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import confetti from 'canvas-confetti';
+
+// Import room wallpapers
+import wallpaper1 from './assets/wallpaper_1.png';
+import wallpaper2 from './assets/wallpaper_2.png';
 
 const DOT_COLORS = [
   { name: 'Red', hex: '#ff6c6c', bg: '#ffd9d9' },
@@ -32,7 +37,10 @@ const FONTS = ['Default', 'Reenie', 'Caveat', 'Kalam'];
 export default function App() {
   const { playShutter, playTape, playSlide, playDeveloping } = useSound();
 
-  // Polaroid State
+  // Background state
+  const [bgImage, setBgImage] = useState(wallpaper1);
+
+  // Snapshot State
   const [image, setImage] = useState(null);
   const [caption, setCaption] = useState('');
   const [font, setFont] = useState('Default');
@@ -121,7 +129,7 @@ export default function App() {
       });
       const imgData = canvas.toDataURL('image/png');
       const link = document.createElement('a');
-      link.download = `polaroid-${caption.trim().replace(/\s+/g, '-').toLowerCase() || 'snapshot'}.png`;
+      link.download = `aurasnap-${caption.trim().replace(/\s+/g, '-').toLowerCase() || 'snapshot'}.png`;
       link.href = imgData;
       link.click();
       
@@ -155,27 +163,48 @@ export default function App() {
   }, [isDeveloping]);
 
   return (
-    <div className="min-h-screen w-screen bg-gradient-to-b from-[#f0f5fa] to-[#e1eaf2] flex flex-col justify-between items-center px-4 py-8 relative font-sans select-none overflow-x-hidden">
+    <div 
+      className="min-h-screen w-screen flex flex-col justify-between items-center px-4 py-8 relative font-sans select-none overflow-x-hidden transition-all duration-700 ease-in-out"
+      style={{
+        backgroundImage: `url(${bgImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
       
-      {/* Specs modal trigger */}
-      <div className="absolute top-6 right-6 flex items-center gap-3 z-20">
+      {/* Specs & Background triggers */}
+      <div className="absolute top-6 right-6 flex items-center gap-2.5 z-20">
+        {/* Background toggle */}
+        <button
+          onClick={() => {
+            playSlide();
+            setBgImage(bgImage === wallpaper1 ? wallpaper2 : wallpaper1);
+          }}
+          className="w-9 h-9 rounded-full border border-stone-200/50 bg-white/75 hover:bg-white/90 backdrop-blur-sm flex items-center justify-center text-stone-600 hover:text-stone-800 transition-all shadow-sm active:scale-95"
+          title="Switch Room Wallpaper"
+        >
+          <ImageIcon size={15} />
+        </button>
+
+        {/* Specs Modal Trigger */}
         <button
           onClick={() => {
             playSlide();
             setShowSpecsModal(true);
           }}
-          className="w-9 h-9 rounded-full border border-stone-200/50 bg-white/70 hover:bg-white flex items-center justify-center text-stone-500 hover:text-stone-700 transition-all shadow-sm active:scale-95"
+          className="w-9 h-9 rounded-full border border-stone-200/50 bg-white/75 hover:bg-white/90 backdrop-blur-sm flex items-center justify-center text-stone-600 hover:text-stone-800 transition-all shadow-sm active:scale-95"
           title="Project Specs"
         >
-          <HelpCircle size={16} />
+          <HelpCircle size={15} />
         </button>
       </div>
 
       {/* Website Logo Title */}
       <header className="text-center mt-3 z-10 select-none">
-        <h1 className="text-[34px] tracking-wide leading-none font-sans font-light select-none">
-          <span className="text-[#20242d] font-normal">Polaroid </span>
-          <span className="text-[#a0aec0] font-light">Studio</span>
+        <h1 className="text-[34px] tracking-wider leading-none font-sans select-none drop-shadow-sm">
+          <span className="text-[#3c362f] font-semibold">Aura</span>
+          <span className="text-[#84827d] font-light ml-0.5">Snap</span>
         </h1>
       </header>
 
@@ -350,7 +379,7 @@ export default function App() {
                 <X size={16} />
               </button>
 
-              <h3 className="text-base font-semibold text-stone-850 mb-6">Share Polaroid</h3>
+              <h3 className="text-base font-semibold text-stone-850 mb-6">Share Snapshot</h3>
 
               {/* Mockup Preview Card */}
               <div 
@@ -472,11 +501,11 @@ export default function App() {
 
               <div className="mb-6">
                 <h2 className="text-lg font-bold text-stone-850 flex items-center gap-1.5">
-                  <span>Polaroid Studio</span>
+                  <span>AuraSnap Studio</span>
                   <span className="text-stone-300 font-normal">•</span>
                   <span className="text-stone-400 font-normal">2026</span>
                 </h2>
-                <p className="text-xs text-stone-400 mt-0.5">A digital way to customize your own polaroid.</p>
+                <p className="text-xs text-stone-400 mt-0.5">A digital way to customize your own snapshot.</p>
               </div>
 
               {/* Refined to 3 columns grid: Design, Frontend, Styling */}
@@ -499,15 +528,15 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-gradient-to-b from-[#eaf0f6] to-[#dce6f0] p-6 flex flex-col items-center justify-center border border-stone-100 select-none">
-                <span className="text-[#a0aec0] text-[10px] font-semibold tracking-wider mb-4 uppercase">Polaroid Studio</span>
+              <div className="rounded-2xl bg-gradient-to-b from-[#f5f2eb] to-[#e8e2d5] p-6 flex flex-col items-center justify-center border border-stone-200/40 select-none">
+                <span className="text-[#8e8576] text-[10px] font-semibold tracking-wider mb-4 uppercase">AuraSnap Studio</span>
                 
                 {/* Mockup Card */}
                 <div 
                   className="w-[120px] p-2 pb-5 border border-stone-200/35 rounded-sm shadow-md flex flex-col items-center mb-3 transition-colors duration-300"
                   style={{ backgroundColor: frameColor }}
                 >
-                  <div className="w-[104px] h-[104px] bg-[#dce6f0] border border-stone-100" />
+                  <div className="w-[104px] h-[104px] bg-[#e8e2d5] border border-stone-200/30" />
                   <div className="w-12 h-1.5 bg-stone-200 mt-2 rounded-full" />
                 </div>
 
