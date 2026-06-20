@@ -37,6 +37,17 @@ export default function PolaroidCard({
   const panStart = useRef({ x: 0, y: 0 });
   const fileInputRef = useRef(null);
 
+  // Helper to clamp pan offsets inside frame boundaries based on zoom factor
+  const clampPan = (x, y, currentZoom) => {
+    // Frame size is 300px. Image is 300px * currentZoom.
+    const maxPanX = Math.max(0, (300 * currentZoom - 300) / 2);
+    const maxPanY = Math.max(0, (300 * currentZoom - 300) / 2);
+    return {
+      x: Math.max(-maxPanX, Math.min(maxPanX, x)),
+      y: Math.max(-maxPanY, Math.min(maxPanY, y))
+    };
+  };
+
   // Handle Drag to Pan
   const handleMouseDown = (e) => {
     if (!image || isDeveloping) return;
@@ -50,9 +61,16 @@ export default function PolaroidCard({
     if (!isDragging) return;
     const dx = e.clientX - dragStart.current.x;
     const dy = e.clientY - dragStart.current.y;
+    
+    const targetX = panStart.current.x + dx;
+    const targetY = panStart.current.y + dy;
+    
+    // Clamp the target offset so photo doesn't slide outside the viewport
+    const clamped = clampPan(targetX, targetY, zoom);
+    
     onUpdate({
-      panX: panStart.current.x + dx,
-      panY: panStart.current.y + dy
+      panX: clamped.x,
+      panY: clamped.y
     });
   };
 
@@ -60,13 +78,21 @@ export default function PolaroidCard({
     setIsDragging(false);
   };
 
-  // Scroll to Zoom
+  // Scroll to Zoom with bounds correction
   const handleWheel = (e) => {
     if (!image || isDeveloping) return;
     e.preventDefault();
     const zoomStep = 0.05;
-    const newZoom = Math.max(0.5, Math.min(3.0, zoom + (e.deltaY < 0 ? zoomStep : -zoomStep)));
-    onUpdate({ zoom: newZoom });
+    const newZoom = Math.max(1.0, Math.min(3.0, zoom + (e.deltaY < 0 ? zoomStep : -zoomStep)));
+    
+    // Recalculate clamps for the new zoom level to correct pan overflow
+    const clamped = clampPan(panX, panY, newZoom);
+    
+    onUpdate({ 
+      zoom: newZoom,
+      panX: clamped.x,
+      panY: clamped.y
+    });
   };
 
   useEffect(() => {
@@ -78,7 +104,7 @@ export default function PolaroidCard({
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging]);
+  }, [isDragging, zoom, panX, panY]);
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -106,7 +132,7 @@ export default function PolaroidCard({
       {/* Physical single Polaroid card */}
       <div
         ref={exportRef}
-        className="relative w-[340px] p-5 pb-12 shadow-card hover:shadow-card-hover rounded-sm border border-stone-200/30 transition-all duration-300 flex flex-col items-center"
+        className="relative w-[340px] p-5 pb-12 shadow-card hover:shadow-card-hover rounded-sm border border-stone-200/35 transition-all duration-300 flex flex-col items-center"
         style={{ backgroundColor: frameColor }}
       >
         {/* Polaroid Inner Frame (Viewport) */}
@@ -154,7 +180,7 @@ export default function PolaroidCard({
           )}
         </div>
 
-        {/* Polaroid caption & date container - aligned on the same horizontal line */}
+        {/* Polaroid caption & date container */}
         <div className="w-full mt-4 px-1 flex flex-col justify-start select-text">
           <div className="flex justify-between items-end border-b border-stone-200/80 pb-1.5 w-full min-h-[2.4rem] relative">
             {isEditing ? (
