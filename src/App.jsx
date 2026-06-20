@@ -11,15 +11,10 @@ import {
   X, 
   HelpCircle, 
   Type, 
-  ExternalLink,
-  Image as ImageIcon
+  ExternalLink
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import confetti from 'canvas-confetti';
-
-// Import room wallpapers
-import wallpaper1 from './assets/wallpaper_1.png';
-import wallpaper2 from './assets/wallpaper_2.png';
 
 const DOT_COLORS = [
   { name: 'Red', hex: '#ff6c6c', bg: '#ffd9d9' },
@@ -36,9 +31,6 @@ const FONTS = ['Default', 'Reenie', 'Caveat', 'Kalam'];
 
 export default function App() {
   const { playShutter, playTape, playSlide, playDeveloping } = useSound();
-
-  // Background state
-  const [bgImage, setBgImage] = useState(wallpaper1);
 
   // Snapshot State
   const [image, setImage] = useState(null);
@@ -163,37 +155,16 @@ export default function App() {
   }, [isDeveloping]);
 
   return (
-    <div 
-      className="min-h-screen w-screen flex flex-col justify-between items-center px-4 py-8 relative font-sans select-none overflow-x-hidden transition-all duration-700 ease-in-out"
-      style={{
-        backgroundImage: `url(${bgImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-      }}
-    >
+    <div className="min-h-screen w-screen bg-gradient-to-b from-[#f0f5fa] to-[#e1eaf2] flex flex-col justify-between items-center px-4 py-8 relative font-sans select-none overflow-x-hidden">
       
-      {/* Specs & Background triggers */}
-      <div className="absolute top-6 right-6 flex items-center gap-2.5 z-20">
-        {/* Background toggle */}
-        <button
-          onClick={() => {
-            playSlide();
-            setBgImage(bgImage === wallpaper1 ? wallpaper2 : wallpaper1);
-          }}
-          className="w-9 h-9 rounded-full border border-stone-200/50 bg-white/75 hover:bg-white/90 backdrop-blur-sm flex items-center justify-center text-stone-600 hover:text-stone-800 transition-all shadow-sm active:scale-95"
-          title="Switch Room Wallpaper"
-        >
-          <ImageIcon size={15} />
-        </button>
-
-        {/* Specs Modal Trigger */}
+      {/* Specs modal trigger */}
+      <div className="absolute top-6 right-6 flex items-center gap-3 z-20">
         <button
           onClick={() => {
             playSlide();
             setShowSpecsModal(true);
           }}
-          className="w-9 h-9 rounded-full border border-stone-200/50 bg-white/75 hover:bg-white/90 backdrop-blur-sm flex items-center justify-center text-stone-600 hover:text-stone-800 transition-all shadow-sm active:scale-95"
+          className="w-9 h-9 rounded-full border border-stone-200/50 bg-white/70 hover:bg-white flex items-center justify-center text-stone-500 hover:text-stone-700 transition-all shadow-sm active:scale-95"
           title="Project Specs"
         >
           <HelpCircle size={15} />
