@@ -4,60 +4,23 @@
 
 @layer base {
   body {
-    @apply font-sans text-stone-800 bg-[#f7f5ef] antialiased overflow-hidden select-none;
-    background-image: 
-      radial-gradient(circle at 10% 20%, rgba(240, 237, 227, 0.4) 0%, transparent 40%),
-      radial-gradient(circle at 90% 80%, rgba(228, 222, 206, 0.4) 0%, transparent 40%);
+    @apply font-sans text-stone-800 bg-gradient-to-b from-[#f0f5fa] to-[#e1eaf2] min-h-screen w-screen antialiased overflow-hidden select-none;
   }
 }
 
-/* Beautiful retro camera grid/dot background */
-.bg-cream-dots {
-  background-image: radial-gradient(#e6e1d3 1px, transparent 1px);
-  background-size: 20px 20px;
-}
-
-/* Authentic film grain texture - extremely soft and subtle */
-.grain-texture::after {
-  content: "";
-  position: absolute;
-  top: -10rem;
-  left: -10rem;
-  width: calc(100% + 20rem);
-  height: calc(100% + 20rem);
-  opacity: 0.035;
-  pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-  animation: grainNoise 8s steps(10) infinite;
-  mix-blend-mode: multiply;
-}
-
-@keyframes grainNoise {
-  0%, 100% { transform:translate(0, 0) }
-  10% { transform:translate(-2%, -4%) }
-  20% { transform:translate(-6%, 2%) }
-  30% { transform:translate(3%, -8%) }
-  40% { transform:translate(-2%, 8%) }
-  50% { transform:translate(-6%, 4%) }
-  60% { transform:translate(6%, 0) }
-  70% { transform:translate(0, 6%) }
-  80% { transform:translate(2%, 10%) }
-  90% { transform:translate(-4%, 4%) }
-}
-
-/* Clean, premium shadows for the physical card */
+/* Clean shadows for the physical card */
 .shadow-card {
   box-shadow: 
-    0 1px 3px rgba(0, 0, 0, 0.05),
+    0 1px 3px rgba(0, 0, 0, 0.02),
     0 10px 30px rgba(0, 0, 0, 0.04),
-    0 1px 1px rgba(0, 0, 0, 0.02);
+    0 1px 1px rgba(0, 0, 0, 0.01);
 }
 
 .shadow-card-hover {
   box-shadow: 
-    0 4px 6px rgba(0, 0, 0, 0.02),
-    0 20px 45px rgba(0, 0, 0, 0.08),
-    0 2px 4px rgba(0, 0, 0, 0.03);
+    0 4px 6px rgba(0, 0, 0, 0.01),
+    0 20px 45px rgba(0, 0, 0, 0.06),
+    0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 /* Monospace fonts for dates */
