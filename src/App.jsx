@@ -11,25 +11,22 @@ import {
   X, 
   HelpCircle, 
   Type, 
-  Sparkles,
   ExternalLink
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import confetti from 'canvas-confetti';
 
 const DOT_COLORS = [
-  { name: 'Red', hex: '#ff6c6c' },
-  { name: 'Orange', hex: '#ffa85e' },
-  { name: 'Yellow', hex: '#ffde43' },
-  { name: 'Green', hex: '#69db88' },
-  { name: 'Cyan', hex: '#48d6d6' },
-  { name: 'Blue', hex: '#57a8ff' },
-  { name: 'Purple', hex: '#8b8bff' },
-  { name: 'White', hex: '#ffffff' }
+  { name: 'Red', hex: '#ff6c6c', bg: '#ffd9d9' },
+  { name: 'Orange', hex: '#ffa85e', bg: '#ffead9' },
+  { name: 'Yellow', hex: '#ffde43', bg: '#fffad9' },
+  { name: 'Green', hex: '#69db88', bg: '#d6f5df' },
+  { name: 'Cyan', hex: '#48d6d6', bg: '#daf9f9' },
+  { name: 'Blue', hex: '#57a8ff', bg: '#e0eeff' },
+  { name: 'Purple', hex: '#8b8bff', bg: '#e5e5ff' }
 ];
 
-const FILTERS = ['Normal', 'Vintage', 'Warm', 'Cool', 'Sepia', 'Mono'];
-const FONTS = ['Reenie', 'Caveat', 'Kalam'];
+const FONTS = ['Default', 'Reenie', 'Caveat', 'Kalam'];
 
 export default function App() {
   const { playShutter, playTape, playSlide, playDeveloping } = useSound();
@@ -37,24 +34,25 @@ export default function App() {
   // Polaroid State
   const [image, setImage] = useState(null);
   const [caption, setCaption] = useState('');
-  const [font, setFont] = useState('Reenie');
+  const [font, setFont] = useState('Default');
   const [filter, setFilter] = useState('Normal');
   const [zoom, setZoom] = useState(1);
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
   const [frameColor, setFrameColor] = useState('#ffffff');
+  const [activeColorName, setActiveColorName] = useState('White');
   const [showDate, setShowDate] = useState(true);
   const [date, setDate] = useState('');
   const [isDeveloping, setIsDeveloping] = useState(false);
 
-  // Modal control states
+  // Modals
   const [showShareModal, setShowShareModal] = useState(false);
   const [showSpecsModal, setShowSpecsModal] = useState(false);
   const [copyStatus, setCopyStatus] = useState('Copy Link');
 
   const exportRef = useRef(null);
 
-  // Format Date (MM.DD.YY)
+  // Format date (MM.DD.YY)
   const getFormattedDate = () => {
     const d = new Date();
     const yy = String(d.getFullYear()).slice(-2);
@@ -84,16 +82,34 @@ export default function App() {
     if (fields.zoom !== undefined) setZoom(fields.zoom);
   };
 
+  const handleColorClick = (color) => {
+    playSlide();
+    if (activeColorName === color.name) {
+      setFrameColor('#ffffff');
+      setActiveColorName('White');
+    } else {
+      setFrameColor(color.bg);
+      setActiveColorName(color.name);
+    }
+  };
+
+  const cycleFont = () => {
+    playSlide();
+    const nextIndex = (FONTS.indexOf(font) + 1) % FONTS.length;
+    setFont(FONTS[nextIndex]);
+  };
+
   const handleRestart = () => {
     playSlide();
     setImage(null);
     setCaption('');
     setFilter('Normal');
-    setFont('Reenie');
+    setFont('Default');
     setZoom(1);
     setPanX(0);
     setPanY(0);
     setFrameColor('#ffffff');
+    setActiveColorName('White');
   };
 
   const handleDownload = async () => {
@@ -104,7 +120,7 @@ export default function App() {
         useCORS: true,
         allowTaint: true,
         backgroundColor: null,
-        scale: 3, // High quality PNG
+        scale: 3,
       });
       const imgData = canvas.toDataURL('image/png');
       const link = document.createElement('a');
@@ -144,21 +160,21 @@ export default function App() {
   return (
     <div className="min-h-screen w-screen bg-gradient-to-b from-[#f0f5fa] to-[#e1eaf2] flex flex-col justify-between items-center px-4 py-8 relative font-sans select-none overflow-x-hidden">
       
-      {/* Help specs button */}
+      {/* Specs modal trigger */}
       <div className="absolute top-6 right-6 flex items-center gap-3 z-20">
         <button
           onClick={() => {
             playSlide();
             setShowSpecsModal(true);
           }}
-          className="w-9 h-9 rounded-full border border-stone-200/60 bg-white/70 hover:bg-white flex items-center justify-center text-stone-500 hover:text-stone-700 transition-all shadow-sm active:scale-95"
+          className="w-9 h-9 rounded-full border border-stone-200/50 bg-white/70 hover:bg-white flex items-center justify-center text-stone-500 hover:text-stone-700 transition-all shadow-sm active:scale-95"
           title="Project Specs"
         >
           <HelpCircle size={16} />
         </button>
       </div>
 
-      {/* 1. Header Logo (Image 3 style - clean & fresh) */}
+      {/* Website Logo Title */}
       <header className="text-center mt-3 z-10 select-none">
         <h1 className="text-[34px] tracking-wide leading-none font-sans font-light select-none">
           <span className="text-[#20242d] font-normal">Polaroid </span>
@@ -166,7 +182,7 @@ export default function App() {
         </h1>
       </header>
 
-      {/* 2. Main Centered Polaroid Card with Spring Animation */}
+      {/* Main Centered Polaroid Card */}
       <main className="flex-1 flex items-center justify-center my-6 z-10">
         <motion.div
           key={image ? 'loaded' : 'empty'}
@@ -193,123 +209,69 @@ export default function App() {
         </motion.div>
       </main>
 
-      {/* 3. Controls & Action Bar */}
+      {/* Controls and Actions (exactly matching Screenshot 4 & 5 layout) */}
       <div className="flex flex-col items-center gap-5.5 w-full max-w-xl z-10">
         
-        {/* Spacious, structured control panel utilizing rigid grid layout */}
+        {/* Floating pill control bar */}
         {image && (
           <motion.div 
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, ease: 'easeOut' }}
-            className="bg-white rounded-3xl p-6 shadow-sm border border-stone-200/40 w-full"
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="bg-white rounded-full px-5 py-2 shadow-sm border border-stone-200/20 flex items-center gap-4.5"
           >
-            <div className="grid grid-cols-[100px_1fr] items-center gap-y-5">
-              
-              {/* Row 1: Colors & Custom Picker */}
-              <span className="text-[10px] text-stone-400 font-mono font-medium tracking-widest uppercase">Card Color</span>
-              <div className="flex items-center gap-2 flex-wrap">
-                {DOT_COLORS.map((col) => (
-                  <button
-                    key={col.name}
-                    onClick={() => {
-                      playSlide();
-                      setFrameColor(col.hex);
-                    }}
-                    style={{ backgroundColor: col.hex }}
-                    className={`w-6.5 h-6.5 rounded-full border border-stone-200/60 hover:scale-105 active:scale-95 transition-all shadow-sm ${
-                      frameColor.toLowerCase() === col.hex.toLowerCase()
-                        ? 'ring-2 ring-stone-400 ring-offset-1 scale-105' 
-                        : ''
-                    }`}
-                    title={col.name}
-                  />
-                ))}
-                {/* Custom Color Rainbow Picker */}
-                <div 
-                  className="w-6.5 h-6.5 rounded-full border border-stone-300 bg-gradient-to-tr from-red-400 via-green-400 to-blue-400 hover:scale-105 active:scale-95 transition-all relative cursor-pointer shadow-sm"
-                  title="Custom Color"
-                >
-                  <input
-                    type="color"
-                    value={frameColor.startsWith('#') ? frameColor : '#ffffff'}
-                    onChange={(e) => setFrameColor(e.target.value)}
-                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                  />
-                </div>
-              </div>
-
-              {/* Row 2: Photo Effects (Filters) */}
-              <span className="text-[10px] text-stone-400 font-mono font-medium tracking-widest uppercase">Photo Effect</span>
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
-                {FILTERS.map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => {
-                      playSlide();
-                      setFilter(f);
-                    }}
-                    className={`text-[10px] px-3.5 py-1.5 rounded-full border transition-all ${
-                      filter === f
-                        ? 'bg-black border-black text-white font-semibold shadow-sm'
-                        : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-700'
-                    }`}
-                  >
-                    {f}
-                  </button>
-                ))}
-              </div>
-
-              {/* Row 3: Typography choices & Date checkbox */}
-              <span className="text-[10px] text-stone-400 font-mono font-medium tracking-widest uppercase">Font Style</span>
-              <div className="flex items-center gap-3 w-full justify-between">
-                {/* Font list buttons */}
-                <div className="flex items-center gap-1.5">
-                  {FONTS.map((fo) => (
-                    <button
-                      key={fo}
-                      onClick={() => {
-                        playSlide();
-                        setFont(fo);
-                      }}
-                      className={`text-[10px] px-3.5 py-1.5 rounded-full border transition-all ${
-                        font === fo
-                          ? 'bg-black border-black text-white font-semibold shadow-sm'
-                          : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-700'
-                      }`}
-                    >
-                      {fo}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="flex items-center gap-3">
-                  {/* Vertical separator */}
-                  <div className="w-[1px] h-4 bg-stone-200" />
-
-                  {/* Calendar Toggle */}
-                  <button
-                    onClick={() => {
-                      playSlide();
-                      setShowDate(!showDate);
-                    }}
-                    className={`p-1.5 border rounded-full transition-all hover:scale-105 active:scale-95 ${
-                      showDate 
-                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
-                        : 'bg-stone-50 border-stone-200 text-stone-400 hover:bg-stone-100'
-                    }`}
-                    title="Toggle Date Stamp"
-                  >
-                    <Calendar size={14} />
-                  </button>
-                </div>
-              </div>
-
+            {/* 7 Color circles */}
+            <div className="flex items-center gap-2">
+              {DOT_COLORS.map((col) => (
+                <button
+                  key={col.name}
+                  onClick={() => handleColorClick(col)}
+                  style={{ backgroundColor: col.hex }}
+                  className={`w-6.5 h-6.5 rounded-full border border-stone-200/40 hover:scale-105 active:scale-95 transition-all shadow-sm ${
+                    activeColorName === col.name 
+                      ? 'ring-2 ring-[#0070f3] ring-offset-1 scale-105' 
+                      : ''
+                  }`}
+                  title={col.name}
+                />
+              ))}
             </div>
+
+            {/* Vertical Divider */}
+            <div className="w-[1px] h-5 bg-stone-200" />
+
+            {/* Date Calendar Toggle Button */}
+            <button
+              onClick={() => {
+                playSlide();
+                setShowDate(!showDate);
+              }}
+              className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all hover:scale-105 active:scale-95 ${
+                showDate 
+                  ? 'bg-[#0070f3] border-transparent text-white shadow-sm' 
+                  : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50'
+              }`}
+              title="Toggle Date"
+            >
+              <Calendar size={15} />
+            </button>
+
+            {/* Font Style Toggle Button */}
+            <button
+              onClick={cycleFont}
+              className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all hover:scale-105 active:scale-95 ${
+                font !== 'Default' 
+                  ? 'bg-[#0070f3] border-transparent text-white shadow-sm' 
+                  : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50'
+              }`}
+              title={`Current Font: ${font}`}
+            >
+              <Type size={15} />
+            </button>
           </motion.div>
         )}
 
-        {/* Action Panel Buttons (Restart & Share) */}
+        {/* Restart & Share bottom bar */}
         {image && (
           <div className="flex items-center gap-8 mt-1">
             <button
@@ -334,7 +296,7 @@ export default function App() {
         )}
       </div>
 
-      {/* SHARE POLAROID MODAL (Image 2) */}
+      {/* SHARE MODAL POPUP (iOS Share Sheet) */}
       <AnimatePresence>
         {showShareModal && (
           <div className="fixed inset-0 bg-stone-900/25 backdrop-blur-[2px] z-50 flex items-center justify-center p-4">
@@ -357,7 +319,7 @@ export default function App() {
 
               <h3 className="text-base font-semibold text-stone-850 mb-6">Share Polaroid</h3>
 
-              {/* Mini preview */}
+              {/* Mockup Preview Card */}
               <div 
                 className="w-[170px] p-3 pb-8 rounded-sm shadow-md mx-auto mb-6 scale-[0.95] flex flex-col items-center border border-stone-200/40"
                 style={{ backgroundColor: frameColor }}
@@ -367,7 +329,7 @@ export default function App() {
                     <img
                       src={image}
                       alt="Preview"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                     />
                   )}
                 </div>
@@ -376,7 +338,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Quick Actions Grid */}
+              {/* Actions Grid */}
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div
                   onClick={handleCopyLink}
@@ -444,7 +406,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* SPECS/INFO OVERLAY MODAL (Image 4) */}
+      {/* SPECS MODAL (Image 4 specifications popup) */}
       <AnimatePresence>
         {showSpecsModal && (
           <div className="fixed inset-0 bg-stone-900/25 backdrop-blur-[2px] z-50 flex items-center justify-center p-4">
@@ -465,7 +427,6 @@ export default function App() {
                 <X size={16} />
               </button>
 
-              {/* Specs Header */}
               <div className="mb-6">
                 <h2 className="text-lg font-bold text-stone-850 flex items-center gap-1.5">
                   <span>Polaroid Studio</span>
@@ -475,7 +436,6 @@ export default function App() {
                 <p className="text-xs text-stone-400 mt-0.5">A digital way to customize your own polaroid.</p>
               </div>
 
-              {/* Specs Columns */}
               <div className="grid grid-cols-4 gap-4 border-t border-stone-100 pt-5 mb-6 text-xs leading-normal">
                 <div>
                   <span className="text-stone-400 block mb-1">Design</span>
@@ -503,11 +463,10 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Specs Mockup container */}
               <div className="rounded-2xl bg-gradient-to-b from-[#eaf0f6] to-[#dce6f0] p-6 flex flex-col items-center justify-center border border-stone-100 select-none">
                 <span className="text-[#a0aec0] text-[10px] font-semibold tracking-wider mb-4 uppercase">Polaroid Studio</span>
                 
-                {/* Card Preview mockup */}
+                {/* Mockup Card */}
                 <div 
                   className="w-[120px] p-2 pb-5 border border-stone-200/35 rounded-sm shadow-md flex flex-col items-center mb-3 transition-colors duration-300"
                   style={{ backgroundColor: frameColor }}
@@ -516,9 +475,9 @@ export default function App() {
                   <div className="w-12 h-1.5 bg-stone-200 mt-2 rounded-full" />
                 </div>
 
-                {/* Simulated color circles */}
+                {/* Simulated colors dot picker bar */}
                 <div className="flex items-center gap-1.5 bg-white rounded-full px-3 py-1 shadow-sm border border-stone-200/10">
-                  {DOT_COLORS.slice(0, 7).map((c) => (
+                  {DOT_COLORS.map((c) => (
                     <div
                       key={c.name}
                       style={{ backgroundColor: c.hex }}
