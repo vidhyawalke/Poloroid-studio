@@ -41,6 +41,7 @@ export default function App() {
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
   const [frameColor, setFrameColor] = useState('#ffffff');
+  const [textColor, setTextColor] = useState('#1a202c'); // Default elegant charcoal black ink
   const [activeColorName, setActiveColorName] = useState('White');
   const [showDate, setShowDate] = useState(true);
   const [date, setDate] = useState('');
@@ -104,6 +105,7 @@ export default function App() {
     setPanX(0);
     setPanY(0);
     setFrameColor('#ffffff');
+    setTextColor('#1a202c');
     setActiveColorName('White');
   };
 
@@ -155,7 +157,7 @@ export default function App() {
   return (
     <div className="min-h-screen w-screen bg-gradient-to-b from-[#f0f5fa] to-[#e1eaf2] flex flex-col justify-between items-center px-4 py-8 relative font-sans select-none overflow-x-hidden">
       
-      {/* Help specs button */}
+      {/* Specs modal trigger */}
       <div className="absolute top-6 right-6 flex items-center gap-3 z-20">
         <button
           onClick={() => {
@@ -177,7 +179,7 @@ export default function App() {
         </h1>
       </header>
 
-      {/* Centered Polaroid Card with Entry Animation */}
+      {/* Centered Polaroid Card */}
       <main className="flex-1 flex items-center justify-center my-6 z-10">
         <motion.div
           key={image ? 'loaded' : 'empty'}
@@ -194,6 +196,7 @@ export default function App() {
             panX={panX}
             panY={panY}
             frameColor={frameColor}
+            textColor={textColor}
             showDate={showDate}
             date={date}
             isDeveloping={isDeveloping}
@@ -251,7 +254,7 @@ export default function App() {
             {/* Vertical Divider */}
             <div className="w-[1px] h-5 bg-stone-200" />
 
-            {/* Icons Action block (Calendar toggle & T font toggle) */}
+            {/* Icons Action block (Calendar toggle, T font toggle, Text Color picker) */}
             <div className="flex items-center gap-2">
               {/* Calendar Toggle */}
               <button
@@ -281,6 +284,22 @@ export default function App() {
               >
                 <Type size={15} />
               </button>
+
+              {/* Text Color Picker Circle Button */}
+              <div 
+                className="w-9 h-9 rounded-full border border-stone-200 bg-white hover:bg-stone-50 flex items-center justify-center transition-all hover:scale-105 active:scale-95 relative cursor-pointer shadow-sm"
+                title="Change Text Color"
+              >
+                <input
+                  type="color"
+                  value={textColor}
+                  onChange={(e) => setTextColor(e.target.value)}
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                />
+                <span className="text-xs font-bold font-sans transition-colors" style={{ color: textColor }}>
+                  A
+                </span>
+              </div>
             </div>
           </motion.div>
         )}
@@ -310,7 +329,7 @@ export default function App() {
         )}
       </div>
 
-      {/* SHARE MODAL POPUP (Image 2 & 3 ios share sheet details) */}
+      {/* SHARE MODAL POPUP */}
       <AnimatePresence>
         {showShareModal && (
           <div className="fixed inset-0 bg-stone-900/25 backdrop-blur-[2px] z-50 flex items-center justify-center p-4">
@@ -347,7 +366,7 @@ export default function App() {
                     />
                   )}
                 </div>
-                <div className="w-full text-stone-800 text-[10px] text-center font-mono mt-2 overflow-hidden truncate">
+                <div className="w-full text-[10px] text-center font-mono mt-2 overflow-hidden truncate" style={{ color: textColor }}>
                   {caption || 'Snapshot'}
                 </div>
               </div>
@@ -430,7 +449,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* SPECS/INFO MODAL */}
+      {/* SPECS/INFO MODAL (Image 2 refined with 2026 and 3 columns) */}
       <AnimatePresence>
         {showSpecsModal && (
           <div className="fixed inset-0 bg-stone-900/25 backdrop-blur-[2px] z-50 flex items-center justify-center p-4">
@@ -455,12 +474,13 @@ export default function App() {
                 <h2 className="text-lg font-bold text-stone-850 flex items-center gap-1.5">
                   <span>Polaroid Studio</span>
                   <span className="text-stone-300 font-normal">•</span>
-                  <span className="text-stone-400 font-normal">2025</span>
+                  <span className="text-stone-400 font-normal">2026</span>
                 </h2>
                 <p className="text-xs text-stone-400 mt-0.5">A digital way to customize your own polaroid.</p>
               </div>
 
-              <div className="grid grid-cols-4 gap-4 border-t border-stone-100 pt-5 mb-6 text-xs leading-normal">
+              {/* Refined to 3 columns grid: Design, Frontend, Styling */}
+              <div className="grid grid-cols-3 gap-4 border-t border-stone-100 pt-5 mb-6 text-xs leading-normal">
                 <div>
                   <span className="text-stone-400 block mb-1">Design</span>
                   <span className="text-stone-600 font-medium">Figma</span>
@@ -476,14 +496,6 @@ export default function App() {
                 <div>
                   <span className="text-stone-400 block mb-1">Styling</span>
                   <span className="text-stone-600 font-medium">Tailwind CSS</span>
-                </div>
-                <div>
-                  <span className="text-stone-400 block mb-1">AI</span>
-                  <div className="text-stone-600 font-medium flex flex-col gap-0.5">
-                    <span>Figma Make</span>
-                    <span>Cursor</span>
-                    <span>Opus 4.5</span>
-                  </div>
                 </div>
               </div>
 
