@@ -183,7 +183,7 @@ export default function App() {
           className="w-10 h-10 rounded-full bg-[#ff6c6c] text-white flex items-center justify-center hover:bg-[#e05555] transition-colors focus:outline-none"
           title="Info"
         >
-          <Type size={24} />
+          <Info size={24} />
         </button>
       </div>
 
