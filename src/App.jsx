@@ -189,10 +189,11 @@ export default function App() {
 
       {/* Website Logo Title */}
       <header className="text-center mt-3 z-10 select-none">
-        <h1 className="text-[34px] tracking-wider leading-none font-sans select-none drop-shadow-sm">
-          <span className="text-[#3c362f] font-semibold">Aura</span>
-          <span className="text-[#84827d] font-light ml-0.5">Snap</span>
-        </h1>
+        <div className="inline-block bg-white/30 backdrop-blur-xl rounded-md px-4 py-2 shadow-md">
+          <h1 className="text-[40px] font-bold tracking-wider text-gray-800">
+            AuraSnap Studio
+          </h1>
+        </div>
       </header>
 
       {/* Centered Polaroid Card */}
