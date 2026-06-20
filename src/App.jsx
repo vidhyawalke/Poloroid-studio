@@ -190,7 +190,7 @@ export default function App() {
       {/* Website Logo Title */}
       <header className="text-center mt-3 z-10 select-none">
         <div className="inline-block bg-white/30 backdrop-blur-xl rounded-md px-4 py-2 shadow-md">
-          <h1 className="text-[40px] font-bold tracking-wider text-white drop-shadow-md">
+          <h1 className="text-[40px] font-bold tracking-wider text-black drop-shadow-md">
             AuraSnap Studio
           </h1>
         </div>
