@@ -1,333 +1,217 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, useDragControls } from 'framer-motion';
-import { Trash2, RotateCw, ZoomIn, ZoomOut, Check, Type, Sparkles } from 'lucide-react';
-import { useSound } from '../hooks/useSound';
+import { Type, HelpCircle, AlertCircle } from 'lucide-react';
 
 const FILTERS = [
   { name: 'Normal', class: 'brightness-100 contrast-100 saturate-100' },
-  { name: 'Vintage', class: 'brightness-95 contrast-110 sepia-[0.35] saturate-[0.85]' },
-  { name: 'Warm Retro', class: 'brightness-95 contrast-105 saturate-110 sepia-[0.15] hue-rotate-[5deg]' },
-  { name: 'Cool Film', class: 'brightness-100 contrast-95 saturate-90 hue-rotate-[-8deg] contrast-[0.95]' },
-  { name: 'Sepia', class: 'sepia contrast-90 brightness-95' },
-  { name: 'Mono', class: 'grayscale brightness-105 contrast-125' },
+  { name: 'Vintage', class: 'brightness-95 contrast-[1.05] sepia-[0.25] saturate-[0.9]' },
+  { name: 'Warm', class: 'brightness-95 contrast-[1.02] saturate-110 sepia-[0.12] hue-rotate-[4deg]' },
+  { name: 'Cool', class: 'brightness-[1.02] contrast-95 saturate-90 hue-rotate-[-6deg]' },
+  { name: 'Sepia', class: 'sepia-[0.8] contrast-90 brightness-[0.98]' },
+  { name: 'Mono', class: 'grayscale brightness-105 contrast-[1.15]' },
 ];
 
 const FONTS = [
-  { name: 'Reenie', class: 'font-reenie text-3xl' },
-  { name: 'Caveat', class: 'font-caveat text-2xl' },
-  { name: 'Kalam', class: 'font-kalam text-xl' },
-  { name: 'Shadows', class: 'font-shadows text-xl' },
+  { name: 'Reenie', class: 'font-reenie text-4xl' },
+  { name: 'Caveat', class: 'font-caveat text-3xl font-medium' },
+  { name: 'Kalam', class: 'font-kalam text-2xl' },
 ];
 
 export default function PolaroidCard({
-  card,
+  image,
+  caption,
+  font,
+  filter,
+  zoom,
+  panX,
+  panY,
+  frameColor,
+  washiTape,
+  showDate,
+  date,
+  isDeveloping,
+  onImageUpload,
   onUpdate,
-  onDelete,
-  onSelect,
-  isSelected,
-  canvasRef
+  exportRef
 }) {
-  const { playTape, playDeveloping } = useSound();
-  const [isEditingCaption, setIsEditingCaption] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const [isDraggingImage, setIsDraggingImage] = useState(false);
-  const [showToolbar, setShowToolbar] = useState(false);
-  const [isDeveloping, setIsDeveloping] = useState(card.isDeveloping ?? false);
-  
-  const imageRef = useRef(null);
-  const dragStartPos = useRef({ x: 0, y: 0 });
-  const panStartPos = useRef({ x: 0, y: 0 });
+  const [isEditing, setIsEditing] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0 });
+  const panStart = useRef({ x: 0, y: 0 });
+  const fileInputRef = useRef(null);
 
-  // Handle film developing effect
-  useEffect(() => {
-    if (isDeveloping) {
-      playDeveloping();
-      const timer = setTimeout(() => {
-        setIsDeveloping(false);
-        onUpdate(card.id, { isDeveloping: false });
-      }, 3500);
-      return () => clearTimeout(timer);
-    }
-  }, [isDeveloping]);
-
-  // Handle inline caption changes
-  const handleCaptionChange = (e) => {
-    onUpdate(card.id, { caption: e.target.value });
+  // Handle Drag to Pan within the picture frame
+  const handleMouseDown = (e) => {
+    if (!image || isDeveloping) return;
+    e.preventDefault();
+    setIsDragging(true);
+    dragStart.current = { x: e.clientX, y: e.clientY };
+    panStart.current = { x: panX, y: panY };
   };
 
-  // Image Drag to Pan (crop adjustment)
-  const handleImageMouseDown = (e) => {
-    e.stopPropagation();
-    setIsDraggingImage(true);
-    dragStartPos.current = { x: e.clientX, y: e.clientY };
-    panStartPos.current = { x: card.panX || 0, y: card.panY || 0 };
-  };
-
-  const handleImageMouseMove = (e) => {
-    if (!isDraggingImage) return;
-    const dx = e.clientX - dragStartPos.current.x;
-    const dy = e.clientY - dragStartPos.current.y;
-    
-    // Scale sensitivity by current zoom
-    const zoomFactor = card.zoom || 1;
-    onUpdate(card.id, {
-      panX: panStartPos.current.x + dx,
-      panY: panStartPos.current.y + dy
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - dragStart.current.x;
+    const dy = e.clientY - dragStart.current.y;
+    onUpdate({
+      panX: panStart.current.x + dx,
+      panY: panStart.current.y + dy
     });
   };
 
-  const handleImageMouseUp = () => {
-    setIsDraggingImage(false);
+  const handleMouseUp = () => {
+    setIsDragging(false);
   };
 
   useEffect(() => {
-    if (isDraggingImage) {
-      window.addEventListener('mousemove', handleImageMouseMove);
-      window.addEventListener('mouseup', handleImageMouseUp);
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
     }
     return () => {
-      window.removeEventListener('mousemove', handleImageMouseMove);
-      window.removeEventListener('mouseup', handleImageMouseUp);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDraggingImage]);
+  }, [isDragging]);
 
-  // Rotate card by 15 degree increments
-  const handleQuickRotate = (e) => {
-    e.stopPropagation();
-    playTape();
-    const currentRot = card.rotation || 0;
-    let nextRot = currentRot + 15;
-    if (nextRot >= 360) nextRot = 0;
-    onUpdate(card.id, { rotation: nextRot });
-  };
-
-  // Toggle layout selectors
-  const toggleToolbar = (e) => {
-    e.stopPropagation();
-    setShowToolbar(!showToolbar);
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        onImageUpload(event.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const getFilterCSS = () => {
-    const filterObj = FILTERS.find(f => f.name === card.filter) || FILTERS[0];
+    const filterObj = FILTERS.find(f => f.name === filter) || FILTERS[0];
     return filterObj.class;
   };
 
   const getFontClass = () => {
-    const fontObj = FONTS.find(f => f.name === card.font) || FONTS[0];
+    const fontObj = FONTS.find(f => f.name === font) || FONTS[0];
     return fontObj.class;
   };
 
+  const getWashiTapeCSS = () => {
+    switch (washiTape) {
+      case 'peach':
+        return 'bg-rose-300/40 border-rose-400/20 text-rose-800/50';
+      case 'sage':
+        return 'bg-emerald-200/40 border-emerald-300/20 text-emerald-800/50';
+      case 'sky':
+        return 'bg-sky-200/40 border-sky-300/20 text-sky-800/50';
+      case 'amber':
+        return 'bg-amber-200/40 border-amber-300/20 text-amber-800/50';
+      default:
+        return null;
+    }
+  };
+
   return (
-    <motion.div
-      drag
-      dragMomentum={false}
-      dragConstraints={canvasRef}
-      onDragStart={() => {
-        onSelect();
-        setShowToolbar(false);
-      }}
-      onDragEnd={(e, info) => {
-        // Retrieve current transform matrix/offset to set state
-        const rect = e.target.getBoundingClientRect();
-        const canvasRect = canvasRef.current.getBoundingClientRect();
-        
-        // Update new positions relative to canvas
-        onUpdate(card.id, {
-          x: rect.left - canvasRect.left + (rect.width * 0.1),
-          y: rect.top - canvasRect.top + (rect.height * 0.1)
-        });
-      }}
-      onTapStart={onSelect}
-      style={{
-        position: 'absolute',
-        left: card.x,
-        top: card.y,
-        rotate: `${card.rotation || 0}deg`,
-        zIndex: isSelected ? 50 : 10,
-        touchAction: 'none'
-      }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => {
-        setIsHovered(false);
-        if (!isEditingCaption) setShowToolbar(false);
-      }}
-      className={`group relative w-64 bg-stone-50 p-4 pb-14 shadow-polaroid hover:shadow-polaroid-hover transition-shadow duration-300 rounded-sm border border-stone-200/50 cursor-grab active:cursor-grabbing flex flex-col items-center ${
-        isSelected ? 'ring-2 ring-indigo-500/40 ring-offset-2 ring-offset-stone-100' : ''
-      }`}
-    >
-      {/* Tape decoration at the top of the polaroid, optional visual touch */}
-      {card.hasTape && (
-        <div 
-          className="absolute -top-5 left-1/2 -translate-x-1/2 w-24 h-6 washi-tape rotate-1 bg-amber-200/40 border border-dashed border-amber-300/40"
-          style={{ mixBlendMode: 'multiply' }}
-        />
-      )}
-
-      {/* Action Buttons (visible on hover) */}
-      {isHovered && (
-        <div className="absolute top-2 right-2 flex items-center gap-1.5 z-20">
-          <button
-            onClick={handleQuickRotate}
-            title="Rotate card"
-            className="p-1.5 rounded-full bg-white/90 text-stone-700 shadow-sm border border-stone-200/80 hover:bg-stone-100 transition-colors"
+    <div className="relative flex flex-col items-center">
+      {/* Physical single Polaroid card */}
+      <div
+        ref={exportRef}
+        className={`relative w-[340px] p-5 pb-16 bg-[#faf9f6] shadow-card hover:shadow-card-hover rounded-sm border border-stone-200/40 transition-all duration-300 flex flex-col items-center ${frameColor}`}
+      >
+        {/* Washi Tape overlay */}
+        {washiTape !== 'none' && getWashiTapeCSS() && (
+          <div
+            className={`absolute -top-4 left-1/2 -translate-x-1/2 w-32 h-7 border border-dashed text-[10px] tracking-widest font-mono flex items-center justify-center rotate-1 select-none pointer-events-none z-30 washi-tape ${getWashiTapeCSS()}`}
+            style={{ mixBlendMode: 'multiply' }}
           >
-            <RotateCw size={12} />
-          </button>
-          <button
-            onClick={toggleToolbar}
-            title="Edit card styling"
-            className="p-1.5 rounded-full bg-white/90 text-stone-700 shadow-sm border border-stone-200/80 hover:bg-stone-100 transition-colors"
-          >
-            <Sparkles size={12} />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(card.id);
-            }}
-            title="Delete card"
-            className="p-1.5 rounded-full bg-rose-500/90 text-white shadow-sm hover:bg-rose-600 transition-colors"
-          >
-            <Trash2 size={12} />
-          </button>
-        </div>
-      )}
-
-      {/* Main Image Viewport (Square Box) */}
-      <div className="relative w-56 h-56 bg-stone-900 border border-stone-300/40 overflow-hidden flex items-center justify-center rounded-sm">
-        <div
-          onMouseDown={handleImageMouseDown}
-          className="absolute inset-0 cursor-move flex items-center justify-center"
-          style={{
-            transform: `translate(${card.panX || 0}px, ${card.panY || 0}px) scale(${card.zoom || 1})`,
-            transition: isDraggingImage ? 'none' : 'transform 0.1s ease-out',
-          }}
-        >
-          <img
-            ref={imageRef}
-            src={card.imageUrl}
-            alt="Polaroid snapshot"
-            draggable="false"
-            className={`w-full h-full object-cover select-none pointer-events-none ${getFilterCSS()} ${
-              isDeveloping ? 'animate-develop' : ''
-            }`}
-          />
-        </div>
-
-        {/* Developing chemical overlay */}
-        {isDeveloping && (
-          <div className="absolute inset-0 bg-stone-950/20 backdrop-blur-[3px] pointer-events-none mix-blend-color-burn flex flex-col items-center justify-center">
-            <span className="text-white/60 text-xs font-mono font-medium tracking-widest uppercase bg-stone-950/40 py-1 px-2 rounded backdrop-blur-sm">
-              Developing...
-            </span>
+            ✦ • ✦ • ✦
           </div>
         )}
-      </div>
 
-      {/* Bottom section (Caption & Date) */}
-      <div className="w-full mt-4 flex flex-col justify-start px-1 select-text">
-        {/* Caption */}
-        {isEditingCaption ? (
-          <div className="flex items-center gap-1 w-full border-b border-indigo-400">
+        {/* Polaroid Inner Frame (Viewport) */}
+        <div
+          onClick={() => !image && fileInputRef.current?.click()}
+          className="relative w-[300px] h-[300px] bg-[#ebe7df] border border-stone-300/50 overflow-hidden flex items-center justify-center cursor-pointer rounded-[1px] group"
+        >
+          {image ? (
+            <div
+              onMouseDown={handleMouseDown}
+              className="absolute inset-0 cursor-move"
+              style={{
+                transform: `translate(${panX}px, ${panY}px) scale(${zoom})`,
+                transition: isDragging ? 'none' : 'transform 0.15s ease-out'
+              }}
+            >
+              <img
+                src={image}
+                alt="Polaroid source"
+                draggable="false"
+                className={`w-full h-full object-cover select-none pointer-events-none ${getFilterCSS()} ${
+                  isDeveloping ? 'animate-develop' : ''
+                }`}
+              />
+            </div>
+          ) : (
+            <div className="flex flex-col items-center text-center p-6 text-stone-500 hover:text-stone-700 transition-colors pointer-events-none select-none">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.2" stroke="currentColor" className="w-12 h-12 mb-3 text-stone-400">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
+              </svg>
+              <p className="text-xs font-medium tracking-wide uppercase">Click to Load Image</p>
+              <p className="text-[10px] text-stone-400 mt-1">or drag & drop file here</p>
+            </div>
+          )}
+
+          {/* Film Developing Chemistry HUD */}
+          {image && isDeveloping && (
+            <div className="absolute inset-0 bg-[#0e0e0d]/10 backdrop-blur-[2px] pointer-events-none mix-blend-color-burn flex items-center justify-center">
+              <span className="text-[10px] font-mono text-white bg-black/35 py-1 px-2.5 rounded tracking-widest uppercase">
+                Developing...
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Polaroid caption input */}
+        <div className="w-full mt-5 flex flex-col justify-start px-2 relative">
+          {isEditing ? (
             <input
               type="text"
-              value={card.caption}
-              onChange={handleCaptionChange}
+              value={caption}
+              onChange={(e) => onUpdate({ caption: e.target.value })}
               autoFocus
-              maxLength={45}
+              maxLength={36}
               placeholder="Write a caption..."
-              className={`w-full bg-transparent outline-none text-stone-800 ${getFontClass()} pb-0.5`}
-              onBlur={() => setIsEditingCaption(false)}
+              className={`w-full bg-transparent border-b border-stone-300 outline-none text-stone-800 ${getFontClass()} pb-1`}
+              onBlur={() => setIsEditing(false)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') setIsEditingCaption(false);
+                if (e.key === 'Enter') setIsEditing(false);
               }}
             />
-            <button onClick={() => setIsEditingCaption(false)} className="text-emerald-600">
-              <Check size={14} />
-            </button>
-          </div>
-        ) : (
-          <div
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelect();
-              setIsEditingCaption(true);
-            }}
-            className={`w-full text-stone-800 break-words line-clamp-2 cursor-pointer hover:bg-stone-200/40 rounded px-1 -mx-1 py-0.5 min-h-[1.75rem] ${getFontClass()} leading-tight`}
-          >
-            {card.caption || <span className="text-stone-400 italic text-sm">Add caption...</span>}
-          </div>
-        )}
+          ) : (
+            <div
+              onClick={() => image && setIsEditing(true)}
+              className={`w-full text-stone-800 tracking-wide break-words line-clamp-1 py-1 cursor-text min-h-[2.2rem] ${getFontClass()}`}
+            >
+              {caption || (image ? <span className="text-stone-400/70 italic text-sm font-sans tracking-normal">Click to add text...</span> : '')}
+            </div>
+          )}
 
-        {/* Date Stamp */}
-        {card.showDate && (
-          <div className="absolute bottom-3.5 right-4 font-date text-xs text-stone-500 tracking-wider">
-            {card.date}
-          </div>
-        )}
+          {/* Autogenerated Courier Date Stamp */}
+          {showDate && (
+            <div className="absolute bottom-1 right-2 font-date text-xs text-stone-400 tracking-wider">
+              {date}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Floating Toolbar Controls */}
-      {showToolbar && (
-        <div
-          onMouseDown={(e) => e.stopPropagation()} // Prevent card drag trigger
-          className="absolute -bottom-24 left-1/2 -translate-x-1/2 w-64 glass-dark text-white rounded-lg p-2.5 shadow-2xl flex flex-col gap-2 z-50 animate-fadeIn"
-        >
-          {/* Zoom Slider */}
-          <div className="flex items-center gap-2 justify-between">
-            <ZoomOut size={12} className="text-zinc-400" />
-            <input
-              type="range"
-              min="0.5"
-              max="3"
-              step="0.1"
-              value={card.zoom || 1}
-              onChange={(e) => onUpdate(card.id, { zoom: parseFloat(e.target.value) })}
-              className="w-full h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-indigo-400"
-            />
-            <ZoomIn size={12} className="text-zinc-400" />
-          </div>
-
-          {/* Filters Row */}
-          <div className="flex gap-1 overflow-x-auto pb-1 select-none">
-            {FILTERS.map((f) => (
-              <button
-                key={f.name}
-                onClick={() => onUpdate(card.id, { filter: f.name })}
-                className={`text-[9px] px-1.5 py-0.5 rounded border whitespace-nowrap ${
-                  card.filter === f.name
-                    ? 'bg-indigo-500 border-indigo-400 text-white font-medium'
-                    : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700'
-                }`}
-              >
-                {f.name}
-              </button>
-            ))}
-          </div>
-
-          {/* Fonts Row */}
-          <div className="flex gap-1 items-center justify-between border-t border-zinc-800 pt-1.5">
-            <span className="text-[10px] text-zinc-400 flex items-center gap-1">
-              <Type size={10} /> Font
-            </span>
-            <div className="flex gap-1 select-none">
-              {FONTS.map((font) => (
-                <button
-                  key={font.name}
-                  onClick={() => onUpdate(card.id, { font: font.name })}
-                  className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
-                    card.font === font.name
-                      ? 'bg-indigo-500 text-white'
-                      : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-                  }`}
-                >
-                  {font.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-    </motion.div>
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        className="hidden"
+      />
+    </div>
   );
 }
