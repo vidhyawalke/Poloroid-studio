@@ -9,7 +9,8 @@ import {
   Download, 
   Link as LinkIcon, 
   X, 
-  Type, 
+  Type,
+  Info, 
   Instagram,
   ExternalLink
 } from 'lucide-react';
